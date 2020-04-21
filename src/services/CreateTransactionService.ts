@@ -23,14 +23,14 @@ class CreateTransactionService {
     const transactionRepo = getCustomRepository(TransactionsRepository);
     const { total } = await transactionRepo.getBalance();
 
-    const { typeValidation, validationBalance } = {
+    const { typeValidation, balanceValidation } = {
       typeValidation: type === 'income' || type === 'outcome',
-      validationBalance: type === 'outcome' && value > total,
+      balanceValidation: type === 'outcome' && value > total,
     };
 
     if (!typeValidation) throw new AppError('Invalid type', 401);
 
-    if (validationBalance) {
+    if (balanceValidation) {
       throw new AppError('Invalid transaction', 400);
     }
 

@@ -13,13 +13,15 @@ const upload = multer(uploadConfig);
 transactionsRouter.get('/', async (request, response) => {
   const transactionsCustomRepo = getCustomRepository(TransactionsRepository);
 
-  const transactions = await transactionsCustomRepo.find({
-    relations: ['category'],
-  });
+  try {
+    const transactions = await transactionsCustomRepo.find();
 
-  const balance = await transactionsCustomRepo.getBalance();
+    const balance = await transactionsCustomRepo.getBalance();
 
-  return response.json({ transactions, balance });
+    return response.json({ transactions, balance });
+  } catch (err) {
+    return response.status(400).json({ message: err });
+  }
 });
 
 transactionsRouter.post('/', async (request, response) => {
