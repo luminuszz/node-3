@@ -1,3 +1,4 @@
+/* eslint-disable prefer-const */
 import { getRepository, getCustomRepository } from 'typeorm';
 import AppError from '../errors/AppError';
 import Category from '../models/Category';
@@ -18,40 +19,34 @@ class CreateTransactionService {
     categoryTitle,
     type,
   }: RequestDTO): Promise<Transaction> {
-    if (type !== 'income' && type !== 'outcome') {
-      throw new AppError('Invalid type', 401);
-    }
     const categoryRepo = getRepository(Category);
     const transactionRepo = getCustomRepository(TransactionsRepository);
-
     const { total } = await transactionRepo.getBalance();
 
-    if (type === 'outcome' && value > total) {
+    const { typeValidation, validationBalance } = {
+      typeValidation: type === 'income' || type === 'outcome',
+      validationBalance: type === 'outcome' && value > total,
+    };
+
+    if (!typeValidation) throw new AppError('Invalid type', 401);
+
+    if (validationBalance) {
       throw new AppError('Invalid transaction', 400);
     }
 
-    const categoryExists = await categoryRepo.findOne({
+    let categoryExists = await categoryRepo.findOne({
       where: { title: categoryTitle },
     });
 
     if (!categoryExists) {
-      const newCategory = categoryRepo.create({ title: categoryTitle });
-
-      const { id } = await categoryRepo.save(newCategory);
-
-      const newTransaction = transactionRepo.create({
-        category_id: id,
-        title,
-        value,
-        type,
-      });
-      await transactionRepo.save(newTransaction);
-
-      return newTransaction;
+      categoryExists = categoryRepo.create({ title: categoryTitle });
+      await categoryRepo.save(categoryExists);
     }
 
+    const { id } = categoryExists;
+
     const newTransaction = transactionRepo.create({
-      category_id: categoryExists.id,
+      category_id: id,
       title,
       value,
       type,
