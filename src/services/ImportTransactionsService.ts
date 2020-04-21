@@ -35,13 +35,13 @@ class ImportTransactionsService {
       );
 
       if (!title || !type || !value) return;
+
       categories.push(category);
 
       transactions.push({ title, type, value, category });
     });
+
     await new Promise(resolve => parseCSV.on('end', resolve));
-    console.log(categories);
-    console.log(transactions);
 
     const existsCategoris = await categoryRepo.find({
       where: {
